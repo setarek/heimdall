@@ -1,7 +1,9 @@
+import random, string
 from datetime import datetime
 
 from flask_api import status
 
+from app.jobs.account_verification import send_async_email
 from app.main.user.model.user import User
 from app.main import redis, db
 
@@ -24,7 +26,15 @@ def register_user(data):
 
     if not user:
         # set random code in email verification Queue
-        redis.set("hello", data['email'])
+        verify_code = ''.join(random.sample(string.ascii_lowercase, 7))
+        redis.set(data['email'], verify_code)
+        email = {
+            'subject': 'Asgard verification code',
+            'body': 'verification code: ' + verify_code,
+            'to': data['email']
+        }
+        send_async_email.delay(email)
+
 
     else:
         response = {
