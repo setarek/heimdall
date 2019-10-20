@@ -12,68 +12,67 @@ from app.main.user.model.user import UserSchema
 from app.utils import authentication
 
 api = Api(app)
-parser = reqparse.RequestParser()
 
 
 class User(Resource):
 
-    def get(self, user_id):
-
-        user = user_info(user_id)
-        user_schema = UserSchema()
-        result = user_schema.dump(user)
-
-        return json.dumps(result)
-
-    def delete(self, user_id):
+    def get(self):
 
         auth_header = request.headers.get('Authorization')
+        if auth_header != '':
 
-        current_user = 0
-        if auth_header:
-            current_user = authentication.decode_auth_token(auth_header)
+            user_id = authentication.decode_auth_token(auth_header)
 
-        is_admin = check_permission(current_user)
-        if not is_admin:
-            response = {
-                'status': 'failed',
-                'message': 'user has not permission'
-            }
-            return response, status.HTTP_403_FORBIDDEN
+            try:
+                user = user_info(user_id)
+                user_schema = UserSchema()
+                result = user_schema.dump(user)
 
-
-
-        try:
-            delete_user(user_id)
-            response = {
-                'status': 'success',
-                'message': 'user deleted with with user id %s' % user_id
-            }
-            return response, status.HTTP_200_OK
-
-        except Exception as e:
-            response = {
-                'status': 'failed'
-            }
-
-
-    def put(self, user_id):
-
-        user = change_password(user_id, request.json['data'])
-        if user:
-            response = {
-                'message': 'user updated',
-                'status': 'success'
-            }
-            return response, status.HTTP_200_OK
+                return json.dumps(result), status.HTTP_200_OK
+            except Exception as e:
+                response = {
+                    'status': 'failed',
+                    'message': e
+                }
+                return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
         response = {
-            'message': 'user not found',
-            'status': 'fail'
-
+            'status': 'failed',
+            'message': 'unauthorized user'
         }
+        return response, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
 
-        return response, status.HTTP_409_CONFLICT
+
+    def put(self):
+
+        auth_header = request.headers.get('Authorization')
+        if auth_header != '':
+            user_id = authentication.decode_auth_token(auth_header)
+
+            try:
+                user = change_password(user_id, request.json['data'])
+                if user:
+                    response = {
+                        'message': 'user updated',
+                        'status': 'success'
+                    }
+                    return response, status.HTTP_200_OK
+
+                response = {
+                    'message': 'user not found',
+                    'status': 'failed'
+
+                }
+
+                return response, status.HTTP_409_CONFLICT
+            except Exception as e:
+                response = {
+                    'message': e,
+                    'status': 'failed'
+
+                }
+
+                return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 class RegisterUser(Resource):
@@ -224,9 +223,42 @@ class LoginUser(Resource):
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
+class DeleteUser(Resource):
+    def delete(self, user_id):
+
+        auth_header = request.headers.get('Authorization')
+
+        current_user = 0
+        if auth_header:
+            current_user = authentication.decode_auth_token(auth_header)
+
+        is_admin = check_permission(current_user)
+        if not is_admin:
+            response = {
+                'status': 'failed',
+                'message': 'user has not permission'
+            }
+            return response, status.HTTP_403_FORBIDDEN
+
+        try:
+            delete_user(user_id)
+            response = {
+                'status': 'success',
+                'message': 'user deleted with with user id %s' % user_id
+            }
+            return response, status.HTTP_200_OK
+
+        except Exception as e:
+            response = {
+                'status': 'failed',
+                'message': e
+            }
+            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+
 
 api.add_resource(RegisterUser, '/api/v1/register')
 api.add_resource(VerifyUser, '/api/v1/verify')
-
-api.add_resource(User, '/api/v1/user/<int:user_id>')
 api.add_resource(LoginUser, '/api/v1/login')
+api.add_resource(User, '/api/v1/user')
+api.add_resource(DeleteUser, '/api/v1/user/delete')
+
