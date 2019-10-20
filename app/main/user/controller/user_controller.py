@@ -1,20 +1,21 @@
-from flask import jsonify, request
-from flask_restful import Resource, Api, reqparse, marshal
-from flask_api import status
-
 import json
+
+from flask import request
+from flask_restful import Resource, Api, reqparse
+from flask_api import status
 
 from app.main import app
 from app.main.user.service.registration_service import verify_user, register_user
 from app.main.user.service.user_service import user_info, delete_user, change_password
-from app.main.user.model.user import User, UserSchema
+from app.main.user.model.user import UserSchema
 
 api = Api(app)
 parser = reqparse.RequestParser()
 
+
 class User(Resource):
 
-    def get (self, user_id):
+    def get(self, user_id):
 
         user = user_info(user_id)
         user_schema = UserSchema()
@@ -45,6 +46,7 @@ class User(Resource):
         }
 
         return response, status.HTTP_409_CONFLICT
+
 
 class RegisterUser(Resource):
 

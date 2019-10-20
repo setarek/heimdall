@@ -12,7 +12,7 @@ def __create_user(data):
     return
 
 
-def __check_verification_code(email,code):
+def __check_verification_code(email, code):
 
     # check with redis
     return
@@ -66,9 +66,3 @@ def verify_user(data):
             'message': 'repetitive phonenumber'
         }
         return response
-
-
-
-
-
-

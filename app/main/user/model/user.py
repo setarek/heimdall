@@ -36,8 +36,3 @@ class User(db.Model):
 class UserSchema(marshmallow.ModelSchema):
     class Meta:
         model = User
-
-
-
-
-

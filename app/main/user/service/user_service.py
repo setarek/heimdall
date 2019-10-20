@@ -1,5 +1,3 @@
-from flask import jsonify
-
 from app.main.user.model.user import User
 from app.main import db
 
@@ -11,6 +9,7 @@ def user_info(user_id):
     :return: user object
     """
     return User.query.filter_by(id=user_id).first()
+
 
 def delete_user(user_id):
 
@@ -30,9 +29,7 @@ def delete_user(user_id):
         return e
 
 
-
-
-def change_password(user_id, data):
+def change_password(user_id, **data):
     """
     :param user_id:  user id
     :param new_password: new password requested user
@@ -42,13 +39,14 @@ def change_password(user_id, data):
     try:
 
         # TODO: do not forget hash password
-        is_equal = __compare_password(data['new_password'], data['confirm_password'])
+        is_equal = __compare_password(data['new_password'],
+                                      data['confirm_password'])
         if is_equal:
             user = User.query.filter_by(id=user_id).first()
             if user:
 
                 if data['old_password'] != user['password']:
-                        return
+                    return
                 user.update(dict(password=data['new_password']))
                 db.session.commit()
                 return user
