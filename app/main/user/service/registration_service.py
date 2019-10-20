@@ -9,6 +9,7 @@ from app.main import redis, db
 def __create_user(data):
     db.session.add(data)
     db.session.commit()
+
     return
 
 
@@ -52,17 +53,8 @@ def verify_user(data):
             lastLogin=datetime.utcnow()
 
         )
-
         __create_user(new_user)
-        response = {
-            'status': status.HTTP_201_CREATED,
-            'message': 'successfully created'
-        }
-        return response
-    else:
 
-        response = {
-            'status': status.HTTP_409_CONFLICT,
-            'message': 'repetitive phonenumber'
-        }
-        return response
+        return new_user.id
+    else:
+        return user.id

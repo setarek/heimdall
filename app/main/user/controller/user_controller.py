@@ -8,6 +8,7 @@ from app.main import app
 from app.main.user.service.registration_service import verify_user, register_user
 from app.main.user.service.user_service import user_info, delete_user, change_password
 from app.main.user.model.user import UserSchema
+from app.utils import authentication
 
 api = Api(app)
 parser = reqparse.RequestParser()
@@ -123,9 +124,30 @@ class VerifyUser(Resource):
 
         args = self.reqparse.parse_args()
 
-        # Check Verification code match or not
+        # TODO: Check Verification code match or not
 
-        return verify_user(args)
+        try:
+            user_id = verify_user(args)
+
+            if user_id == -1:
+                response = {
+                    'status': 'failed',
+                    'message': 'try again'
+                }
+                return response, status.HTTP_400_BAD_REQUEST
+
+            token = authentication.encode_auth_token(user_id)
+            response = {
+                'status': 'success',
+                'token': token.decode()
+            }
+            return response, status.HTTP_200_OK
+        except Exception as e:
+            response = {
+                'status': 'failed',
+                'message': e
+            }
+            return response, status.HTTP_400_BAD_REQUEST
 
 
 api.add_resource(RegisterUser, '/api/v1/register')
