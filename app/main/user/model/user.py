@@ -1,5 +1,7 @@
 import datetime
 
+from app.main import marshmallow
+
 from app.main import db, flask_bcrypt
 
 class User(db.Model):
@@ -30,6 +32,10 @@ class User(db.Model):
     def __repr__(self):
         return "<User '{}'>".format(self.email)
 
+
+class UserSchema(marshmallow.ModelSchema):
+    class Meta:
+        model = User
 
 
 
