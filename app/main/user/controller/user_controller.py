@@ -8,7 +8,9 @@ from app.main import app
 from app.main.user.service.registration_service import verify_user, register_user
 from app.main.user.service.user_service import user_info, delete_user, change_password, is_admin as check_permission
 from app.main.user.service.authentication_service import get_userId
+from app.main.user.service.logout_service import add_token_blacklist
 from app.main.user.model.user import UserSchema
+from app.main.user.model.black_list import BlacklistToken
 from app.utils import authentication
 
 api = Api(app)
@@ -248,6 +250,31 @@ class DeleteUser(Resource):
             }
             return response, status.HTTP_200_OK
 
+        except Exception as e:
+            response = {
+                'status': 'failed',
+                'message': e
+            }
+            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+class Logout(Resource):
+
+    def post(self):
+
+        auth_token = ''
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            auth_token = auth_header
+        blacklist_token = BlacklistToken(token=auth_token)
+
+        try:
+            add_token_blacklist(blacklist_token)
+            response = {
+                'status': 'success',
+                'message': 'user logged out'
+            }
+            return response, status.HTTP_204_NO_CONTENT
         except Exception as e:
             response = {
                 'status': 'failed',
