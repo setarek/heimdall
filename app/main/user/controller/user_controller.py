@@ -7,6 +7,7 @@ from flask_api import status
 from app.main import app
 from app.main.user.service.registration_service import verify_user, register_user
 from app.main.user.service.user_service import user_info, delete_user, change_password
+from app.main.user.service.authentication_service import get_userId
 from app.main.user.model.user import UserSchema
 from app.utils import authentication
 
@@ -150,8 +151,56 @@ class VerifyUser(Resource):
             return response, status.HTTP_400_BAD_REQUEST
 
 
+class LoginUser(Resource):
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument(
+            'email',
+            required=True,
+            help='no email provided',
+            location=['form', 'json']
+        )
+
+        self.reqparse.add_argument(
+            'password',
+            required=True,
+            help='no password provided',
+            location=['form', 'json']
+        )
+        super().__init__()
+
+    def post(self):
+
+        args = self.reqparse.parse_args()
+        try:
+            user = get_userId(args['email'], args['password'])
+            if user is None:
+                response = {
+                    'status': 'failed',
+                    'message': 'user does not exists'
+                }
+                return response, status.HTTP_404_NOT_FOUND
+            token = authentication.encode_auth_token(user.id).decode()
+            if token:
+                response = {
+                    'status': 'success',
+                    'message': 'user logged in',
+                    'token': token
+                }
+                return response, status.HTTP_200_OK
+
+        except Exception as e:
+            response = {
+                'status': 'failed',
+                'message': e,
+            }
+            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+
 api.add_resource(RegisterUser, '/api/v1/register')
 api.add_resource(VerifyUser, '/api/v1/verify')
 
-
 api.add_resource(User, '/api/v1/user/<int:user_id>')
+api.add_resource(LoginUser, '/api/v1/login')
