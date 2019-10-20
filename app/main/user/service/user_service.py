@@ -18,15 +18,12 @@ def delete_user(user_id):
     :param user_id:
     :return:
     """
-    try:
-        # TODO: Check user has permission for delete
 
-        user = User.query.get(user_id)
-        db.session.delete(user)
-        db.session.commit()
-        return user
-    except Exception as e:
-        return e
+    user = User.query.get(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return
+
 
 
 def change_password(user_id, **data):
@@ -53,6 +50,18 @@ def change_password(user_id, **data):
         return
     except Exception as e:
         raise e
+
+
+def is_admin(user_id):
+
+    """
+    :param user_id:
+    :return: return true if user is admin
+    """
+    user = User.query.get(user_id)
+    if user.role == 2:
+        return True
+    return False
 
 
 def __compare_password(old_password, confirm_passwod):

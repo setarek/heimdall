@@ -6,7 +6,7 @@ from flask_api import status
 
 from app.main import app
 from app.main.user.service.registration_service import verify_user, register_user
-from app.main.user.service.user_service import user_info, delete_user, change_password
+from app.main.user.service.user_service import user_info, delete_user, change_password, is_admin as check_permission
 from app.main.user.service.authentication_service import get_userId
 from app.main.user.model.user import UserSchema
 from app.utils import authentication
@@ -27,9 +27,35 @@ class User(Resource):
 
     def delete(self, user_id):
 
-        user = delete_user(user_id)
-        user_schema = UserSchema()
-        return user_schema.dump(user)
+        auth_header = request.headers.get('Authorization')
+
+        current_user = 0
+        if auth_header:
+            current_user = authentication.decode_auth_token(auth_header)
+
+        is_admin = check_permission(current_user)
+        if not is_admin:
+            response = {
+                'status': 'failed',
+                'message': 'user has not permission'
+            }
+            return response, status.HTTP_403_FORBIDDEN
+
+
+
+        try:
+            delete_user(user_id)
+            response = {
+                'status': 'success',
+                'message': 'user deleted with with user id %s' % user_id
+            }
+            return response, status.HTTP_200_OK
+
+        except Exception as e:
+            response = {
+                'status': 'failed'
+            }
+
 
     def put(self, user_id):
 
