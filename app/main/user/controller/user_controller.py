@@ -152,8 +152,6 @@ class VerifyUser(Resource):
 
         args = self.reqparse.parse_args()
 
-        # TODO: Check Verification code match or not
-
         try:
             user_id = verify_user(args)
 

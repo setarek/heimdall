@@ -15,26 +15,26 @@ redis = redis.from_url("redis://localhost:6379")
 app = Flask(__name__)
 
 marshmallow = Marshmallow(app)
-
+celery = Celery(__name__, broker='redis://localhost:6379/0')
 
 def create_app(config_name):
 
     app.config.from_object(config_by_name[config_name])
     db.init_app(app)
     flask_bcrypt.init_app(app)
+    celery.conf.update(app.config)
+
 
     # celery config
     app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
     app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-    celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-    celery.conf.update(app.config)
 
     # mail config
-    app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
     app.config['MAIL_USERNAME'] = "username"
     app.config['MAIL_PASSWORD'] = "password"
-    app.config['MAIL_DEFAULT_SENDER'] = 'flask@example.com'
+    app.config['MAIL_DEFAULT_SENDER'] = 'example@gmail.com'
 
     return app

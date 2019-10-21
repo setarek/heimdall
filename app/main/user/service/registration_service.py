@@ -3,7 +3,7 @@ from datetime import datetime
 
 from flask_api import status
 
-from app.jobs.account_verification import send_async_email
+from app.main.tasks.verify_account import send_async_email
 from app.main.user.model.user import User
 from app.main import redis, db
 
@@ -15,10 +15,11 @@ def __create_user(data):
     return
 
 
-def __check_verification_code(email, code):
-
-    # check with redis
-    return
+def __check_verify_code(email, code):
+    real_code = redis.get(email)
+    if real_code.decode() == code:
+        return True
+    return False
 
 
 def register_user(data):
@@ -27,13 +28,13 @@ def register_user(data):
     if not user:
         # set random code in email verification Queue
         verify_code = ''.join(random.sample(string.ascii_lowercase, 7))
-        redis.set(data['email'], verify_code)
+        redis.set(data['email'], verify_code)   
         email = {
             'subject': 'Asgard verification code',
             'body': 'verification code: ' + verify_code,
             'to': data['email']
         }
-        send_async_email.delay(email)
+        send_async_email.apply_async(args=[email], countdown=20)
 
 
     else:
@@ -47,24 +48,33 @@ def register_user(data):
 
 def verify_user(data):
 
-    user = User.query.filter_by(phonenumber=data['phonenumber']).first()
+    is_valid = __check_verify_code(data['email'], data['verification_code'])
 
-    if not user:
+    if is_valid:
+        user = User.query.filter_by(email=data['email']).first()
 
-        new_user = User(
-            firstname=data['firstname'],
-            lastname=data['lastname'],
-            password=data['password'],
-            email=data['email'],
-            role=data['role'],
-            phonenumber=data['phonenumber'],
-            createdAt=datetime.utcnow(),
-            updatedAt=datetime.utcnow(),
-            lastLogin=datetime.utcnow()
+        if not user:
 
-        )
-        __create_user(new_user)
+            new_user = User(
+                firstname=data['firstname'],
+                lastname=data['lastname'],
+                password=data['password'],
+                email=data['email'],
+                role=data['role'],
+                phonenumber=data['phonenumber'],
+                createdAt=datetime.utcnow(),
+                updatedAt=datetime.utcnow(),
+                lastLogin=datetime.utcnow()
 
-        return new_user.id
+            )
+            __create_user(new_user)
+
+            return new_user.id
+        else:
+            return user.id
     else:
-        return user.id
+        return -1
+
+
+
+

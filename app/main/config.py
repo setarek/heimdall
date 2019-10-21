@@ -7,6 +7,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY',
                            'sdkmf^&*(IJKNBVDSR%^YGVDSDR$^TGWEW$%FSCCDW#$%^&UHBvcdx@')
+
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+    MAIL_DEFAULT_SENDER = 'serlina.karimi72@gmail.com'
     DEBUG = False
 
 
