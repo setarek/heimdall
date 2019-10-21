@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from flask import request
@@ -21,6 +22,8 @@ class User(Resource):
     @has_authorized()
     def get(self, user_id):
 
+        app.logger.info('call get user info with ID: %s' % user_id)
+
         try:
             user = user_info(user_id)
             user_schema = UserSchema()
@@ -28,15 +31,17 @@ class User(Resource):
 
             return json.dumps(result), status.HTTP_200_OK
         except Exception as e:
+            app.logger.error(e)
             response = {
                 'status': 'failed',
-                'message': e
+                'message': 'somthing wrong, please try again'
             }
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
     @has_authorized()
     def put(self, user_id):
 
+        app.logger.info('call change password for user with ID: %s' % user_id)
         try:
             user = change_password(user_id, request.json['data'])
             if user:
@@ -44,6 +49,8 @@ class User(Resource):
                     'message': 'user updated',
                     'status': 'success'
                 }
+
+                app.logger.info('password changed for user with ID: %s' % user_id)
                 return response, status.HTTP_200_OK
 
             response = {
@@ -54,8 +61,9 @@ class User(Resource):
 
             return response, status.HTTP_409_CONFLICT
         except Exception as e:
+            app.logger.error(e)
             response = {
-                'message': e,
+                'message': 'something wrong, please try again',
                 'status': 'failed'
 
             }
@@ -77,6 +85,7 @@ class RegisterUser(Resource):
     def post(self):
 
         args = self.reqparse.parse_args()
+        app.logger.info('call user registeration API, requested user: ' + args['email'])
         return register_user(args)
 
 
@@ -137,6 +146,7 @@ class VerifyUser(Resource):
     def post(self):
 
         args = self.reqparse.parse_args()
+        app.logger.info('call verify account API for user: ' + args['email'])
 
         try:
             user_id = verify_user(args)
@@ -149,15 +159,17 @@ class VerifyUser(Resource):
                 return response, status.HTTP_400_BAD_REQUEST
 
             token = encode_auth_token(user_id)
+            app.logger.info('verified user account, email: ' + args['email'])
             response = {
                 'status': 'success',
                 'token': token.decode()
             }
             return response, status.HTTP_200_OK
         except Exception as e:
+            app.logger.error(e)
             response = {
                 'status': 'failed',
-                'message': e
+                'message': 'something wrong, please try again'
             }
             return response, status.HTTP_400_BAD_REQUEST
 
@@ -184,6 +196,7 @@ class LoginUser(Resource):
     def post(self):
 
         args = self.reqparse.parse_args()
+        app.logger.info('call login API, user: ' + args['email'])
         try:
             user = get_userId(args['email'], args['password'])
             if user is None:
@@ -199,12 +212,14 @@ class LoginUser(Resource):
                     'message': 'user logged in',
                     'token': token
                 }
+                app.logger.info('user logged in, email: ' + args['email'])
                 return response, status.HTTP_200_OK
 
         except Exception as e:
+            app.logger.error(e)
             response = {
                 'status': 'failed',
-                'message': e,
+                'message': 'something wrong, please try again',
             }
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -212,6 +227,8 @@ class LoginUser(Resource):
 class DeleteUser(Resource):
     @has_authorized()
     def delete(self, user_id):
+
+        app.logger.info('call delete user API')
 
         auth_header = request.headers.get('Authorization')
 
@@ -233,12 +250,14 @@ class DeleteUser(Resource):
                 'status': 'success',
                 'message': 'user deleted with with user id %s' % user_id
             }
+            app.logger.info('user deleted by adming: ' + current_user + 'user id: ' + user_id)
             return response, status.HTTP_200_OK
 
         except Exception as e:
+            app.logger.error(e)
             response = {
                 'status': 'failed',
-                'message': e
+                'message': 'something wrong, please try again'
             }
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 

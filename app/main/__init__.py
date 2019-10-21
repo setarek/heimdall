@@ -1,10 +1,14 @@
+import os
+import redis
+import logging
+from logging.handlers import RotatingFileHandler
+
+from celery import Celery
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
-import redis
-from celery import Celery
-import os
+
 from .config import config_by_name
 
 db = SQLAlchemy()
@@ -36,5 +40,10 @@ def create_app(config_name):
     app.config['MAIL_USERNAME'] = "username"
     app.config['MAIL_PASSWORD'] = "password"
     app.config['MAIL_DEFAULT_SENDER'] = 'example@gmail.com'
+
+    # Logger config
+    handler = RotatingFileHandler('heimdal.log', maxBytes=10000, backupCount=1)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
 
     return app
