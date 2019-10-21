@@ -26,7 +26,7 @@ def delete_user(user_id):
 
 
 
-def change_password(user_id, **data):
+def change_password(user_id, data):
     """
     :param user_id:  user id
     :param new_password: new password requested user

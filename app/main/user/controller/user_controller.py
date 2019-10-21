@@ -11,70 +11,56 @@ from app.main.user.service.authentication_service import get_userId
 from app.main.user.service.logout_service import add_token_blacklist
 from app.main.user.model.user import UserSchema
 from app.main.user.model.black_list import BlacklistToken
-from app.utils import authentication
+from app.utils.authentication import has_authorized, encode_auth_token, decode_auth_token
 
 api = Api(app)
 
 
 class User(Resource):
 
-    def get(self):
+    @has_authorized()
+    def get(self, user_id):
 
-        auth_header = request.headers.get('Authorization')
-        if auth_header != '':
+        try:
+            user = user_info(user_id)
+            user_schema = UserSchema()
+            result = user_schema.dump(user)
 
-            user_id = authentication.decode_auth_token(auth_header)
+            return json.dumps(result), status.HTTP_200_OK
+        except Exception as e:
+            response = {
+                'status': 'failed',
+                'message': e
+            }
+            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
-            try:
-                user = user_info(user_id)
-                user_schema = UserSchema()
-                result = user_schema.dump(user)
+    @has_authorized()
+    def put(self, user_id):
 
-                return json.dumps(result), status.HTTP_200_OK
-            except Exception as e:
+        try:
+            user = change_password(user_id, request.json['data'])
+            if user:
                 response = {
-                    'status': 'failed',
-                    'message': e
+                    'message': 'user updated',
+                    'status': 'success'
                 }
-                return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+                return response, status.HTTP_200_OK
 
-        response = {
-            'status': 'failed',
-            'message': 'unauthorized user'
-        }
-        return response, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
+            response = {
+                'message': 'user not found',
+                'status': 'failed'
 
+            }
 
-    def put(self):
+            return response, status.HTTP_409_CONFLICT
+        except Exception as e:
+            response = {
+                'message': e,
+                'status': 'failed'
 
-        auth_header = request.headers.get('Authorization')
-        if auth_header != '':
-            user_id = authentication.decode_auth_token(auth_header)
+            }
 
-            try:
-                user = change_password(user_id, request.json['data'])
-                if user:
-                    response = {
-                        'message': 'user updated',
-                        'status': 'success'
-                    }
-                    return response, status.HTTP_200_OK
-
-                response = {
-                    'message': 'user not found',
-                    'status': 'failed'
-
-                }
-
-                return response, status.HTTP_409_CONFLICT
-            except Exception as e:
-                response = {
-                    'message': e,
-                    'status': 'failed'
-
-                }
-
-                return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 class RegisterUser(Resource):
@@ -162,7 +148,7 @@ class VerifyUser(Resource):
                 }
                 return response, status.HTTP_400_BAD_REQUEST
 
-            token = authentication.encode_auth_token(user_id)
+            token = encode_auth_token(user_id)
             response = {
                 'status': 'success',
                 'token': token.decode()
@@ -206,7 +192,7 @@ class LoginUser(Resource):
                     'message': 'user does not exists'
                 }
                 return response, status.HTTP_404_NOT_FOUND
-            token = authentication.encode_auth_token(user.id).decode()
+            token = encode_auth_token(user.id).decode()
             if token:
                 response = {
                     'status': 'success',
@@ -224,13 +210,14 @@ class LoginUser(Resource):
 
 
 class DeleteUser(Resource):
+    @has_authorized()
     def delete(self, user_id):
 
         auth_header = request.headers.get('Authorization')
 
         current_user = 0
         if auth_header:
-            current_user = authentication.decode_auth_token(auth_header)
+            current_user = decode_auth_token(auth_header)
 
         is_admin = check_permission(current_user)
         if not is_admin:
@@ -258,12 +245,21 @@ class DeleteUser(Resource):
 
 class Logout(Resource):
 
+    @has_authorized()
     def post(self):
 
         auth_token = ''
         auth_header = request.headers.get('Authorization')
         if auth_header:
             auth_token = auth_header
+
+        if not auth_token:
+            response = {
+                'status': 'failed',
+                'message': 'unauthorized user'
+            }
+            return response, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
+
         blacklist_token = BlacklistToken(token=auth_token)
 
         try:
@@ -284,6 +280,6 @@ class Logout(Resource):
 api.add_resource(RegisterUser, '/api/v1/register')
 api.add_resource(VerifyUser, '/api/v1/verify')
 api.add_resource(LoginUser, '/api/v1/login')
-api.add_resource(User, '/api/v1/user')
-api.add_resource(DeleteUser, '/api/v1/user/delete')
+api.add_resource(User, '/api/v1/user/<int:user_id>')
+api.add_resource(DeleteUser, '/api/v1/user/delete/<int:user_id>')
 

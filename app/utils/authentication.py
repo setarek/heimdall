@@ -1,6 +1,9 @@
 import datetime
-
 import jwt
+from functools import wraps
+
+from flask_restful import request
+from flask_api import status
 
 from app.main import app
 from app.main.user.model.black_list import BlacklistToken
@@ -52,3 +55,22 @@ def check_blacklist(auth_token):
         return True
     else:
         return False
+
+
+def has_authorized():
+    def _has_authorized(func):
+        @wraps(func)
+        def __has_authorized(*args, **kwargs):
+            # just do here everything what you need
+
+            auth_header = request.headers.get('Authorization')
+            if auth_header != '':
+                response = {
+                    'message': 'Unauthorized user'
+                }
+                return response, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
+
+            result = func(*args, **kwargs)
+            return result
+        return __has_authorized
+    return _has_authorized
