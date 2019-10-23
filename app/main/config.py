@@ -23,7 +23,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/heimdall_test'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/heimdall_dev?user=setare&password=setare'
     PRESERVE_CONTEXT_ON_EXCEPTION = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
