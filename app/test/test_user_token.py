@@ -2,27 +2,15 @@ from datetime import datetime
 
 from app.main import db
 from app.main.user.model.user import User
-from app.utils.authentication import encode_auth_token
-from app.test.base import BaseTestCase
+from app.utils.authentication import encode_auth_token, decode_auth_token
+from app.test.base import BaseTestCase, test_user
 
-class TestUserTokenBaseTestCase):
+class TestUserToken(BaseTestCase):
 
     def test_user_token(self):
 
-        user = User(
-            phonenumber='01234567890',
-            email='test@test.com',
-            firstname='bruce',
-            lastname='banner',
+        auth_token = encode_auth_token(test_user)
 
-            role=1,
-            createdAt=datetime.utcnow(),
-            updatedAt=datetime.utcnow(),
-            lastLogin=datetime.utcnow()
-        )
+        decoded_user = decode_auth_token(auth_token.decode())
+        self.assertTrue(decoded_user == test_user)
 
-        db.session.add(user)
-        db.session.commit()
-
-        auth_token = encode_auth_token(user.id)
-        self.assertTrue(isinstance(auth_token, bytes))
