@@ -257,8 +257,8 @@ class LoginUser(Resource):
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-api.add_resource(RegisterUser, '/api/v1/user')
-api.add_resource(VerifyUser, '/api/v1/verify')
+api.add_resource(RegisterUser, '/api/v1/users')
+api.add_resource(VerifyUser, '/api/v1/verification')
 api.add_resource(LoginUser, '/api/v1/token')
 api.add_resource(User, '/api/v1/users/<int:user_id>')
 
