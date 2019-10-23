@@ -6,7 +6,7 @@ from app.utils.authentication import encode_auth_token, decode_auth_token
 from app.test.base import BaseTestCase
 
 class TestUserToken(BaseTestCase):
-    test_user = None # <--- 👈
+    test_user = None 
 
     def setUp(self):
         db.create_all()
