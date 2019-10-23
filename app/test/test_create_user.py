@@ -5,9 +5,9 @@ from app.main.user.model.user import User
 from app.utils.authentication import encode_auth_token
 from app.test.base import BaseTestCase
 
-class TestUserAuthentication(BaseTestCase):
+class TestCreateUser(BaseTestCase):
 
-    def test_user_auth(self):
+    def test_create_user(self):
 
         user = User(
             phonenumber='01234567890',
