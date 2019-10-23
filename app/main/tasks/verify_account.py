@@ -8,7 +8,7 @@ mail = Mail(app)
 @celery.task()
 def send_async_email(email_data):
     msg = Message(email_data['subject'],
-                  sender=app.config['MAIL_DEFAULT_SENDER'],
+                  sender='serlina.karimi72@gmail.com',
                   recipients=[email_data['to']])
     msg.body = email_data['body']
     with app.app_context():

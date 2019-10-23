@@ -1,4 +1,3 @@
-import datetime
 import json
 
 from flask import request
@@ -9,9 +8,7 @@ from app.main import app
 from app.main.user.service.registration_service import verify_user, register_user
 from app.main.user.service.user_service import user_info, delete_user, change_password, is_admin as check_permission
 from app.main.user.service.authentication_service import get_userId
-from app.main.user.service.logout_service import add_token_blacklist
 from app.main.user.model.user import UserSchema
-from app.main.user.model.black_list import BlacklistToken
 from app.utils.authentication import has_authorized, encode_auth_token, decode_auth_token
 
 api = Api(app)
@@ -68,6 +65,42 @@ class User(Resource):
 
             }
 
+            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    @has_authorized()
+    def delete(self, user_id):
+
+        app.logger.info('call delete user API')
+
+        auth_header = request.headers.get('Authorization')
+
+        current_user = 0
+        if auth_header:
+            current_user = decode_auth_token(auth_header)
+
+        is_admin = check_permission(current_user)
+        if not is_admin:
+            response = {
+                'status': 'failed',
+                'message': 'user has not permission'
+            }
+            return response, status.HTTP_403_FORBIDDEN
+
+        try:
+            delete_user(user_id)
+            response = {
+                'status': 'success',
+                'message': 'user deleted with with user id %s' % user_id
+            }
+            app.logger.info('user deleted by adming: ' + current_user + 'user id: ' + user_id)
+            return response, status.HTTP_200_OK
+
+        except Exception as e:
+            app.logger.error(e)
+            response = {
+                'status': 'failed',
+                'message': 'something wrong, please try again'
+            }
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
@@ -224,81 +257,8 @@ class LoginUser(Resource):
             return response, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-class DeleteUser(Resource):
-    @has_authorized()
-    def delete(self, user_id):
-
-        app.logger.info('call delete user API')
-
-        auth_header = request.headers.get('Authorization')
-
-        current_user = 0
-        if auth_header:
-            current_user = decode_auth_token(auth_header)
-
-        is_admin = check_permission(current_user)
-        if not is_admin:
-            response = {
-                'status': 'failed',
-                'message': 'user has not permission'
-            }
-            return response, status.HTTP_403_FORBIDDEN
-
-        try:
-            delete_user(user_id)
-            response = {
-                'status': 'success',
-                'message': 'user deleted with with user id %s' % user_id
-            }
-            app.logger.info('user deleted by adming: ' + current_user + 'user id: ' + user_id)
-            return response, status.HTTP_200_OK
-
-        except Exception as e:
-            app.logger.error(e)
-            response = {
-                'status': 'failed',
-                'message': 'something wrong, please try again'
-            }
-            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
-
-
-class Logout(Resource):
-
-    @has_authorized()
-    def post(self):
-
-        auth_token = ''
-        auth_header = request.headers.get('Authorization')
-        if auth_header:
-            auth_token = auth_header
-
-        if not auth_token:
-            response = {
-                'status': 'failed',
-                'message': 'unauthorized user'
-            }
-            return response, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
-
-        blacklist_token = BlacklistToken(token=auth_token)
-
-        try:
-            add_token_blacklist(blacklist_token)
-            response = {
-                'status': 'success',
-                'message': 'user logged out'
-            }
-            return response, status.HTTP_204_NO_CONTENT
-        except Exception as e:
-            response = {
-                'status': 'failed',
-                'message': e
-            }
-            return response, status.HTTP_500_INTERNAL_SERVER_ERROR
-
-
-api.add_resource(RegisterUser, '/api/v1/register')
+api.add_resource(RegisterUser, '/api/v1/user')
 api.add_resource(VerifyUser, '/api/v1/verify')
-api.add_resource(LoginUser, '/api/v1/login')
-api.add_resource(User, '/api/v1/user/<int:user_id>')
-api.add_resource(DeleteUser, '/api/v1/user/delete/<int:user_id>')
+api.add_resource(LoginUser, '/api/v1/token')
+api.add_resource(User, '/api/v1/users/<int:user_id>')
 

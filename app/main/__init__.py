@@ -32,14 +32,15 @@ def create_app(config_name):
     # celery config
     app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
     app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+    app.config['BROKER_TRANSPORT'] = 'redis'
 
     # mail config
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = "username"
-    app.config['MAIL_PASSWORD'] = "password"
-    app.config['MAIL_DEFAULT_SENDER'] = 'example@gmail.com'
+    app.config['MAIL_USERNAME'] = "serlina.karimi72@gmail.com"
+    app.config['MAIL_PASSWORD'] = "seka7296AI"
+    app.config['MAIL_DEFAULT_SENDER'] = "serlina.karimi72@gmail.com"
 
     # Logger config
     handler = RotatingFileHandler('heimdal.log', maxBytes=10000, backupCount=1)

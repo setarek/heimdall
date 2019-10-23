@@ -2,6 +2,7 @@ import random, string
 from datetime import datetime
 
 from flask_api import status
+from app.main import app
 
 from app.main.tasks.verify_account import send_async_email
 from app.main.user.model.user import User
@@ -34,6 +35,7 @@ def register_user(data):
             'body': 'verification code: ' + verify_code,
             'to': data['email']
         }
+        print(app.config)
         send_async_email.apply_async(args=[email], countdown=20)
 
 
