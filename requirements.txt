@@ -4,7 +4,7 @@ aniso8601==8.0.0
 bcrypt==3.1.7
 billiard==3.6.1.0
 blinker==1.4
-celery==4.3.0
+celery==5.2.2
 cffi==1.13.0
 Click==7.0
 entrypoints==0.3
